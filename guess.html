@@ -75,21 +75,93 @@
         const totalRounds = 10;
         let hasScoredThisRound = false;
 
-        document.getElementById('csvFileInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const text = e.target.result;
-                    wordsArray = parseCSV(text);
-                    if (wordsArray.length > 0) {
-                        selectRandomWords();
-                    }
-                };
-                reader.readAsText(file);
-            }
-        });
+//        document.getElementById('csvFileInput').addEventListener('change', function(event) {
+//            const file = event.target.files[0];
+//            if (file) {
+//                const reader = new FileReader();
+//                reader.onload = function(e) {
+//                    const text = e.target.result;
+//                    wordsArray = parseCSV(text);
+//                    if (wordsArray.length > 0) {
+//                        selectRandomWords();
+//                    }
+//                };
+//                reader.readAsText(file);
+//           }
+//        });
 
+document.getElementById('csvFileInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        readCSVFile(file);
+    }
+});
+
+// 增加內建檔案選擇的部分
+const builtInFilesSelect = document.getElementById('builtInFilesSelect');
+
+// 從伺服器獲取 "vocab" 目錄中的所有檔案
+fetch('vocab/')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('無法獲取 vocab 目錄');
+        }
+        return response.json(); // 假設伺服器返回 JSON 格式的檔案列表
+    })
+    .then(files => {
+        files.forEach((filePath, index) => {
+            const option = document.createElement('option');
+            option.value = `vocab/${filePath}`;
+            option.textContent = filePath;
+            builtInFilesSelect.appendChild(option);
+        });
+    })
+    .catch(error => {
+        console.error('無法讀取 vocab 目錄:', error);
+    });
+
+// 當用戶選擇內建檔案時的事件處理
+builtInFilesSelect.addEventListener('change', function() {
+    const selectedFilePath = builtInFilesSelect.value;
+    if (selectedFilePath) {
+        fetch(selectedFilePath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('網路回應出錯');
+                }
+                return response.text();
+            })
+            .then(text => {
+                wordsArray = parseCSV(text);
+                if (wordsArray.length > 0) {
+                    selectRandomWords();
+                }
+            })
+            .catch(error => {
+                console.error('無法讀取內建檔案:', error);
+            });
+    }
+});
+
+function readCSVFile(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const text = e.target.result;
+        wordsArray = parseCSV(text);
+        if (wordsArray.length > 0) {
+            selectRandomWords();
+        }
+    };
+    reader.readAsText(file);
+}
+
+
+
+
+
+
+
+        
         function parseCSV(text) {
             return text.split('\n').map(line => {
                 const parts = line.split('","');
