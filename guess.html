@@ -101,7 +101,7 @@ document.getElementById('csvFileInput').addEventListener('change', function(even
 const builtInFilesSelect = document.getElementById('builtInFilesSelect');
 
 // 從伺服器獲取 "vocab" 目錄中的所有檔案
-fetch('vocab/')
+fetch('eve_vocab/2024_1004/')
     .then(response => {
         if (!response.ok) {
             throw new Error('無法獲取 vocab 目錄');
