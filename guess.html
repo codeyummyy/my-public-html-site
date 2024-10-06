@@ -101,7 +101,7 @@ document.getElementById('csvFileInput').addEventListener('change', function(even
 const builtInFilesSelect = document.getElementById('builtInFilesSelect');
 
 // 從伺服器獲取 "vocab" 目錄中的所有檔案
-fetch('eve_vocab/2024_1004/')
+fetch('vocab/')
     .then(response => {
         if (!response.ok) {
             throw new Error('無法獲取 vocab 目錄');
@@ -119,6 +119,30 @@ fetch('eve_vocab/2024_1004/')
     .catch(error => {
         console.error('無法讀取 vocab 目錄:', error);
     });
+
+// 增加一個按鈕供用戶選擇內建檔案
+const selectBuiltInButton = document.getElementById('selectBuiltInButton');
+selectBuiltInButton.addEventListener('click', function() {
+    const selectedFilePath = builtInFilesSelect.value;
+    if (selectedFilePath) {
+        fetch(selectedFilePath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('網路回應出錯');
+                }
+                return response.text();
+            })
+            .then(text => {
+                wordsArray = parseCSV(text);
+                if (wordsArray.length > 0) {
+                    selectRandomWords();
+                }
+            })
+            .catch(error => {
+                console.error('無法讀取內建檔案:', error);
+            });
+    }
+});
 
 // 當用戶選擇內建檔案時的事件處理
 builtInFilesSelect.addEventListener('change', function() {
@@ -154,8 +178,6 @@ function readCSVFile(file) {
     };
     reader.readAsText(file);
 }
-
-
 
 
 
