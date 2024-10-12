@@ -227,14 +227,26 @@ function readCSVFile(file) {
             hasScoredThisRound = false;
         }
 
-        function displayDefinitions() {
-            const definitionsDiv = document.getElementById('definitions');
-            definitionsDiv.innerHTML = "";
-            currentWords.forEach((entry, index) => {
-                definitionsDiv.innerHTML += `<p>Definition ${index + 1}: ${entry.englishDefinition}</p>`;
-            });
-        }
+//        function displayDefinitions() {
+//           const definitionsDiv = document.getElementById('definitions');
+//            definitionsDiv.innerHTML = "";
+//            currentWords.forEach((entry, index) => {
+//                definitionsDiv.innerHTML += `<p>Definition ${index + 1}: ${entry.englishDefinition}</p>`;
+//            });
+//        }
 
+function displayDefinitions() {
+    const definitionsDiv = document.getElementById('definitions');
+    definitionsDiv.innerHTML = "";
+    currentWords.forEach((entry, index) => {
+        // 使用正則表達式將單詞替換為 ***
+        const sanitizedDefinition = entry.englishDefinition.replace(new RegExp(entry.word, 'gi'), '***');
+        definitionsDiv.innerHTML += `<p>Definition ${index + 1}: ${sanitizedDefinition}</p>`;
+    });
+}
+
+
+        
         function displayHints() {
             document.getElementById('guessInput1').placeholder = `Answer for Definition 1 (Hint: ${currentWords[0].word[0]}...${currentWords[0].word[currentWords[0].word.length - 1]})`;
             document.getElementById('guessInput2').placeholder = `Answer for Definition 2 (Hint: ${currentWords[1].word[0]}...${currentWords[1].word[currentWords[1].word.length - 1]})`;
