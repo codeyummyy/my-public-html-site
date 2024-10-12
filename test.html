@@ -47,13 +47,30 @@
             font-size: 18px;
             font-weight: bold;
         }
+        .level-buttons {
+            margin-top: 20px;
+        }
+        .level-buttons button {
+            margin: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>Word Fill Game!</h1>
-        <input type="file" id="csvFileInput" accept=".csv">
-        <br><br>
+        <div class="level-buttons">
+            <!-- Buttons for each level -->
+            <button onclick="loadLevel(1)">Level 1</button>
+            <button onclick="loadLevel(2)">Level 2</button>
+            <button onclick="loadLevel(3)">Level 3</button>
+            <button onclick="loadLevel(4)">Level 4</button>
+            <button onclick="loadLevel(5)">Level 5</button>
+            <button onclick="loadLevel(6)">Level 6</button>
+            <button onclick="loadLevel(7)">Level 7</button>
+            <button onclick="loadLevel(8)">Level 8</button>
+            <button onclick="loadLevel(9)">Level 9</button>
+            <button onclick="loadLevel(10)">Level 10</button>
+        </div>
         <div id="sentences"></div>
         <br>
         <div id="answers">
@@ -75,22 +92,22 @@
         const totalRounds = 10;
         let hasScoredThisRound = false;
 
-        document.getElementById('csvFileInput').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const text = e.target.result;
+        function loadLevel(level) {
+            const filePath = `highschool/test_${level}.csv`; // Dynamic file path based on the level selected
+            fetch(filePath)
+                .then(response => response.text())
+                .then(text => {
                     wordsArray = parseCSV(text);
                     if (wordsArray.length > 0) {
                         selectRandomWords();
                     } else {
                         alert("The CSV file is empty or could not be parsed correctly.");
                     }
-                };
-                reader.readAsText(file);
-            }
-        });
+                })
+                .catch(error => {
+                    alert("Error loading the CSV file: " + error);
+                });
+        }
 
         function parseCSV(text) {
             const rows = text.split(/\r?\n/);
@@ -135,10 +152,7 @@
             const sentencesDiv = document.getElementById('sentences');
             sentencesDiv.innerHTML = "";
             currentWords.forEach((entry, index) => {
-                //const escapedWord = entry.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special characters in the word
-              const escapedWord = entry.word; // Escape special characters in the word
-                //const sentenceWithBlank = entry.exampleSentence.replace(new RegExp(`\b${escapedWord}\b`, 'gi'), "___");
-              const sentenceWithBlank = entry.exampleSentence.replace(entry.word, "___");
+                const sentenceWithBlank = entry.exampleSentence.replace(entry.word, "___");
                 sentencesDiv.innerHTML += `<p>Sentence ${index + 1}: ${sentenceWithBlank}</p>`;
             });
         }
