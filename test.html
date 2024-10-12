@@ -178,7 +178,9 @@
             const sentencesDiv = document.getElementById('sentences');
             sentencesDiv.innerHTML = "";
             currentWords.forEach((entry, index) => {
-                const sentenceWithBlank = entry.exampleSentence.replace(entry.word, "___");
+                const escapedWord = entry.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special characters
+                const regex = new RegExp(`\\b${escapedWord}\\b`, 'gi'); // Case-insensitive match
+                const sentenceWithBlank = entry.exampleSentence.replace(regex, "___");
                 sentencesDiv.innerHTML += `<p>Sentence ${index + 1}: ${sentenceWithBlank}</p>`;
             });
         }
