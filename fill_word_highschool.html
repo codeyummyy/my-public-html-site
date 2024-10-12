@@ -135,6 +135,28 @@
                 });
         }
 
+
+    document.getElementById('csvFileInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            readCSVFile(file);
+        }
+    });
+
+    function readCSVFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            wordsArray = parseCSV(text);
+            if (wordsArray.length > 0) {
+                selectRandomWords();
+            }
+        };
+        reader.readAsText(file);
+    }
+
+
+        
         function parseCSV(text) {
             const rows = text.split(/\r?\n/);
             const result = [];
