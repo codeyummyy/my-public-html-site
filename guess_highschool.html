@@ -203,9 +203,9 @@ function readCSVFile(file) {
                 const parts = line.split('","');
                 return {
                     word: parts[0].trim().replace(/"/g, ""),
-                    chineseDefinition: parts[3] ? parts[3].trim() : "No Chinese definition available",
+                    chineseDefinition: parts[2] ? parts[2].trim() : "No Chinese definition available",
                     pronunciation: parts[1] ? parts[1].trim() : "No pronunciation available",
-                    englishDefinition: parts[2] ? parts[2].trim() : "No definition available"
+                    englishDefinition: parts[3] ? parts[3].trim() : "No definition available"
                 };
             }).filter(entry => entry.word.length > 0 && entry.englishDefinition.length > 0);
         }
