@@ -47,272 +47,199 @@
             font-size: 18px;
             font-weight: bold;
         }
+        #levelButtons {
+            margin-top: 20px;
+        }
+        #levelButtons button {
+            margin: 5px;
+        }
     </style>
 </head>
-
-
-    
 <body>
 
+<div class="game-container">
+    <h1>Guess the Word!</h1>
+    <input type="file" id="csvFileInput" accept=".csv">
+    <br><br>
+    <div id="levelButtons">
+        <button onclick="selectLevel(1)">Level 1</button>
+        <button onclick="selectLevel(2)">Level 2</button>
+        <button onclick="selectLevel(3)">Level 3</button>
+        <button onclick="selectLevel(4)">Level 4</button>
+        <button onclick="selectLevel(5)">Level 5</button>
+        <button onclick="selectLevel(6)">Level 6</button>
+        <button onclick="selectLevel(7)">Level 7</button>
+        <button onclick="selectLevel(8)">Level 8</button>
+        <button onclick="selectLevel(9)">Level 9</button>
+        <button onclick="selectLevel(10)">Level 10</button>
+    </div>
+    <br><br>
+    <div id="definitions"></div>
+    <br>
+    <div id="answers">
+        <input type="text" id="guessInput1" placeholder="Answer for Definition 1">
+        <input type="text" id="guessInput2" placeholder="Answer for Definition 2">
+        <input type="text" id="guessInput3" placeholder="Answer for Definition 3">
+    </div>
+    <button onclick="submitAllGuesses()">Submit All Answers</button>
+    <div id="result"></div>
+    <div id="score">Score: 0</div>
+    <div id="round">Round: 1 / 10</div>
+</div>
 
- <div class="game-container">
-     <h1>Guess the Word!</h1>
-     <input type="file" id="csvFileInput" accept=".csv">
-     <br><br>
-     <select id="builtInFilesSelect">
-         <option value="">選擇內建檔案</option>
-     </select>
-     <button id="selectBuiltInButton">選擇內建檔案</button>
-     <br><br>
-     <div id="definitions"></div>
-     <br>
-     <div id="answers">
-         <input type="text" id="guessInput1" placeholder="Answer for Definition 1">
-         <input type="text" id="guessInput2" placeholder="Answer for Definition 2">
-         <input type="text" id="guessInput3" placeholder="Answer for Definition 3">
-     </div>
-     <button onclick="submitAllGuesses()">Submit All Answers</button>
-     <div id="result"></div>
-     <div id="score">Score: 0</div>
-     <div id="round">Round: 1 / 10</div>
- </div>
+<script>
+    let wordsArray = [];
+    let currentWords = [];
+    let usedWords = new Set();
+    let score = 0;
+    let round = 1;
+    const totalRounds = 10;
+    let hasScoredThisRound = false;
 
-
-
-    
-    <script>
-        let wordsArray = [];
-        let currentWords = [];
-        let usedWords = new Set();
-        let score = 0;
-        let round = 1;
-        const totalRounds = 10;
-        let hasScoredThisRound = false;
-
-//        document.getElementById('csvFileInput').addEventListener('change', function(event) {
-//            const file = event.target.files[0];
-//            if (file) {
-//                const reader = new FileReader();
-//                reader.onload = function(e) {
-//                    const text = e.target.result;
-//                    wordsArray = parseCSV(text);
-//                    if (wordsArray.length > 0) {
-//                        selectRandomWords();
-//                    }
-//                };
-//                reader.readAsText(file);
-//           }
-//        });
-
-document.getElementById('csvFileInput').addEventListener('change', function(event) {
-    const file = event.target.files[0];
-    if (file) {
-        readCSVFile(file);
-    }
-});
-
-// 增加內建檔案選擇的部分
-const builtInFilesSelect = document.getElementById('builtInFilesSelect');
-
-// 從伺服器獲取 "vocab" 目錄中的所有檔案
-fetch('eve_vocab/2024_1004/')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('無法獲取 vocab 目錄');
+    document.getElementById('csvFileInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            readCSVFile(file);
         }
-        return response.json(); // 假設伺服器返回 JSON 格式的檔案列表
-    })
-    .then(files => {
-        files.forEach((filePath, index) => {
-            const option = document.createElement('option');
-            option.value = `vocab/${filePath}`;
-            option.textContent = filePath;
-            builtInFilesSelect.appendChild(option);
+    });
+
+    function readCSVFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            wordsArray = parseCSV(text);
+            if (wordsArray.length > 0) {
+                selectRandomWords();
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function parseCSV(text) {
+        return text.split('\n').map(line => {
+            const parts = line.split('","');
+            return {
+                word: parts[0].trim().replace(/"/g, ""),
+                chineseDefinition: parts[2] ? parts[2].trim() : "No Chinese definition available",
+                pronunciation: parts[1] ? parts[1].trim() : "No pronunciation available",
+                englishDefinition: parts[3] ? parts[3].trim() : "No definition available"
+            };
+        }).filter(entry => entry.word.length > 0 && entry.englishDefinition.length > 0);
+    }
+
+    function selectRandomWords() {
+        currentWords = [];
+        const usedIndexes = new Set();
+        while (currentWords.length < 3 && wordsArray.length > 0) {
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * wordsArray.length);
+            } while (usedIndexes.has(randomIndex) || usedWords.has(wordsArray[randomIndex].word));
+            usedIndexes.add(randomIndex);
+            usedWords.add(wordsArray[randomIndex].word);
+            currentWords.push(wordsArray[randomIndex]);
+        }
+        displayDefinitions();
+        displayHints();
+        hasScoredThisRound = false;
+    }
+
+    function displayDefinitions() {
+        const definitionsDiv = document.getElementById('definitions');
+        definitionsDiv.innerHTML = "";
+        currentWords.forEach((entry, index) => {
+            // 使用正則表達式將單詞替換為 ***
+            const sanitizedDefinition = entry.englishDefinition.replace(new RegExp(entry.word, 'gi'), '***');
+            definitionsDiv.innerHTML += `<p>Definition ${index + 1}: ${sanitizedDefinition}</p>`;
         });
-    })
-    .catch(error => {
-        console.error('無法讀取 vocab 目錄:', error);
-    });
-
-// 增加一個按鈕供用戶選擇內建檔案
-const selectBuiltInButton = document.getElementById('selectBuiltInButton');
-selectBuiltInButton.addEventListener('click', function() {
-    const selectedFilePath = builtInFilesSelect.value;
-    if (selectedFilePath) {
-        fetch(selectedFilePath)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('網路回應出錯');
-                }
-                return response.text();
-            })
-            .then(text => {
-                wordsArray = parseCSV(text);
-                if (wordsArray.length > 0) {
-                    selectRandomWords();
-                }
-            })
-            .catch(error => {
-                console.error('無法讀取內建檔案:', error);
-            });
     }
-});
 
-// 當用戶選擇內建檔案時的事件處理
-builtInFilesSelect.addEventListener('change', function() {
-    const selectedFilePath = builtInFilesSelect.value;
-    if (selectedFilePath) {
-        fetch(selectedFilePath)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('網路回應出錯');
-                }
-                return response.text();
-            })
-            .then(text => {
-                wordsArray = parseCSV(text);
-                if (wordsArray.length > 0) {
-                    selectRandomWords();
-                }
-            })
-            .catch(error => {
-                console.error('無法讀取內建檔案:', error);
-            });
+    function displayHints() {
+        document.getElementById('guessInput1').placeholder = `Answer for Definition 1 (Hint: ${currentWords[0].word[0]}...${currentWords[0].word[currentWords[0].word.length - 1]})`;
+        document.getElementById('guessInput2').placeholder = `Answer for Definition 2 (Hint: ${currentWords[1].word[0]}...${currentWords[1].word[currentWords[1].word.length - 1]})`;
+        document.getElementById('guessInput3').placeholder = `Answer for Definition 3 (Hint: ${currentWords[2].word[0]}...${currentWords[2].word[currentWords[2].word.length - 1]})`;
     }
-});
 
-function readCSVFile(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        wordsArray = parseCSV(text);
-        if (wordsArray.length > 0) {
-            selectRandomWords();
+    function submitAllGuesses() {
+        const guessInput1 = document.getElementById('guessInput1').value.trim().toLowerCase().replace(/"/g, "");
+        const guessInput2 = document.getElementById('guessInput2').value.trim().toLowerCase().replace(/"/g, "");
+        const guessInput3 = document.getElementById('guessInput3').value.trim().toLowerCase().replace(/"/g, "");
+        const resultDiv = document.getElementById('result');
+        let correctCount = 0;
+        let correctAnswers = [];
+
+        if (currentWords[0].word.toLowerCase() === guessInput1) {
+            correctCount++;
+        } else {
+            correctAnswers.push(`Definition 1: Correct answer is "${currentWords[0].word}" (${currentWords[0].chineseDefinition}, ${currentWords[0].pronunciation})`);
         }
-    };
-    reader.readAsText(file);
-}
-
-
-
-
-
-        
-        function parseCSV(text) {
-            return text.split('\n').map(line => {
-                const parts = line.split('","');
-                return {
-                    word: parts[0].trim().replace(/"/g, ""),
-                    chineseDefinition: parts[2] ? parts[2].trim() : "No Chinese definition available",
-                    pronunciation: parts[1] ? parts[1].trim() : "No pronunciation available",
-                    englishDefinition: parts[3] ? parts[3].trim() : "No definition available"
-                };
-            }).filter(entry => entry.word.length > 0 && entry.englishDefinition.length > 0);
+        if (currentWords[1].word.toLowerCase() === guessInput2) {
+            correctCount++;
+        } else {
+            correctAnswers.push(`Definition 2: Correct answer is "${currentWords[1].word}" (${currentWords[1].chineseDefinition},  ${currentWords[1].pronunciation})`);
+        }
+        if (currentWords[2].word.toLowerCase() === guessInput3) {
+            correctCount++;
+        } else {
+            correctAnswers.push(`Definition 3: Correct answer is "${currentWords[2].word}" (${currentWords[2].chineseDefinition},  ${currentWords[2].pronunciation})`);
         }
 
-        function selectRandomWords() {
-            currentWords = [];
-            const usedIndexes = new Set();
-            while (currentWords.length < 3 && wordsArray.length > 0) {
-                let randomIndex;
-                do {
-                    randomIndex = Math.floor(Math.random() * wordsArray.length);
-                } while (usedIndexes.has(randomIndex) || usedWords.has(wordsArray[randomIndex].word));
-                usedIndexes.add(randomIndex);
-                usedWords.add(wordsArray[randomIndex].word);
-                currentWords.push(wordsArray[randomIndex]);
-            }
-            displayDefinitions();
-            displayHints();
-            hasScoredThisRound = false;
+        if (!hasScoredThisRound) {
+            score += correctCount;
+            hasScoredThisRound = true;
         }
 
-//        function displayDefinitions() {
-//           const definitionsDiv = document.getElementById('definitions');
-//            definitionsDiv.innerHTML = "";
-//            currentWords.forEach((entry, index) => {
-//                definitionsDiv.innerHTML += `<p>Definition ${index + 1}: ${entry.englishDefinition}</p>`;
-//            });
-//        }
-
-function displayDefinitions() {
-    const definitionsDiv = document.getElementById('definitions');
-    definitionsDiv.innerHTML = "";
-    currentWords.forEach((entry, index) => {
-        // 使用正則表達式將單詞替換為 ***
-        const sanitizedDefinition = entry.englishDefinition.replace(new RegExp(entry.word, 'gi'), '***');
-        definitionsDiv.innerHTML += `<p>Definition ${index + 1}: ${sanitizedDefinition}</p>`;
-    });
-}
-
-
-        
-        function displayHints() {
-            document.getElementById('guessInput1').placeholder = `Answer for Definition 1 (Hint: ${currentWords[0].word[0]}...${currentWords[0].word[currentWords[0].word.length - 1]})`;
-            document.getElementById('guessInput2').placeholder = `Answer for Definition 2 (Hint: ${currentWords[1].word[0]}...${currentWords[1].word[currentWords[1].word.length - 1]})`;
-            document.getElementById('guessInput3').placeholder = `Answer for Definition 3 (Hint: ${currentWords[2].word[0]}...${currentWords[2].word[currentWords[2].word.length - 1]})`;
-        }
-
-        function submitAllGuesses() {
-            const guessInput1 = document.getElementById('guessInput1').value.trim().toLowerCase().replace(/"/g, "");
-            const guessInput2 = document.getElementById('guessInput2').value.trim().toLowerCase().replace(/"/g, "");
-            const guessInput3 = document.getElementById('guessInput3').value.trim().toLowerCase().replace(/"/g, "");
-            const resultDiv = document.getElementById('result');
-            let correctCount = 0;
-            let correctAnswers = [];
-
-            if (currentWords[0].word.toLowerCase() === guessInput1) {
-                correctCount++;
+        if (correctCount === 3) {
+            if (round < totalRounds) {
+                resultDiv.innerHTML = `You got all ${correctCount} correct! 👍<br><button onclick="nextRound()">Next Round</button>`;
             } else {
-                correctAnswers.push(`Definition 1: Correct answer is "${currentWords[0].word}" (${currentWords[0].chineseDefinition}, ${currentWords[0].pronunciation})`);
+                resultDiv.innerHTML = `You got all ${correctCount} correct! 👍<br>Game Over! Your total score is: ${score}`;
             }
-            if (currentWords[1].word.toLowerCase() === guessInput2) {
-                correctCount++;
-            } else {
-                correctAnswers.push(`Definition 2: Correct answer is "${currentWords[1].word}" (${currentWords[1].chineseDefinition},  ${currentWords[1].pronunciation})`);
-            }
-            if (currentWords[2].word.toLowerCase() === guessInput3) {
-                correctCount++;
-            } else {
-                correctAnswers.push(`Definition 3: Correct answer is "${currentWords[2].word}" (${currentWords[2].chineseDefinition},  ${currentWords[2].pronunciation})`);
-            }
-
-            if (!hasScoredThisRound) {
-                score += correctCount;
-                hasScoredThisRound = true;
-            }
-
-            if (correctCount === 3) {
-                if (round < totalRounds) {
-                    resultDiv.innerHTML = `You got all ${correctCount} correct! 👍<br><button onclick="nextRound()">Next Round</button>`;
-                } else {
-                    resultDiv.innerHTML = `You got all ${correctCount} correct! 👍<br>Game Over! Your total score is: ${score}`;
-                }
-            } else {
-                resultDiv.innerHTML = `Incorrect guesses. Try again!<br>` + correctAnswers.join('<br>');
-                document.getElementById('guessInput1').value = "";
-                document.getElementById('guessInput2').value = "";
-                document.getElementById('guessInput3').value = "";
-                
-            }
-
-            updateScore();
-        }
-
-        function updateScore() {
-            document.getElementById('score').textContent = `Score: ${score}`;
-            document.getElementById('round').textContent = `Round: ${round} / ${totalRounds}`;
-        }
-
-        function nextRound() {
-            round++;
-            hasScoredThisRound = false;
-            selectRandomWords();
-            document.getElementById('result').innerHTML = "";
+        } else {
+            resultDiv.innerHTML = `Incorrect guesses. Try again!<br>` + correctAnswers.join('<br>');
             document.getElementById('guessInput1').value = "";
             document.getElementById('guessInput2').value = "";
             document.getElementById('guessInput3').value = "";
         }
-    </script>
+
+        updateScore();
+    }
+
+    function updateScore() {
+        document.getElementById('score').textContent = `Score: ${score}`;
+        document.getElementById('round').textContent = `Round: ${round} / ${totalRounds}`;
+    }
+
+    function nextRound() {
+        round++;
+        hasScoredThisRound = false;
+        selectRandomWords();
+        document.getElementById('result').innerHTML = "";
+        document.getElementById('guessInput1').value = "";
+        document.getElementById('guessInput2').value = "";
+        document.getElementById('guessInput3').value = "";
+    }
+
+    function selectLevel(level) {
+        const filePath = `highschool/test_${level}.csv`;
+        fetch(filePath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('無法讀取所選檔案');
+                }
+                return response.text();
+            })
+            .then(text => {
+                wordsArray = parseCSV(text);
+                if (wordsArray.length > 0) {
+                    selectRandomWords();
+                }
+            })
+            .catch(error => {
+                console.error('讀取檔案時發生錯誤:', error);
+            });
+    }
+</script>
+
 </body>
 </html>
