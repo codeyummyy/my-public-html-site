@@ -47,6 +47,10 @@
             font-size: 18px;
             font-weight: bold;
         }
+        #timer {
+            margin-top: 20px;
+            font-size: 16px;
+        }
         .level-buttons {
             margin-top: 20px;
         }
@@ -82,6 +86,7 @@
         <div id="result"></div>
         <div id="score">Score: 0</div>
         <div id="round">Round: 1 / 10</div>
+        <div id="timer">Time Spent: 0 seconds</div> <!-- Timer display -->
     </div>
     <script>
         let wordsArray = [];
@@ -92,7 +97,28 @@
         const totalRounds = 10;
         let hasScoredThisRound = false;
 
+        let gameStartTime;
+        let timerInterval;
+
+        function startTimer() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000); // Update the timer every second
+        }
+
+        function updateTimer() {
+            const currentTime = Date.now();
+            const timeSpent = Math.floor((currentTime - gameStartTime) / 1000); // Calculate time in seconds
+            document.getElementById('timer').textContent = `Time Spent: ${timeSpent} seconds`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval); // Stop the timer
+        }
+
         function loadLevel(level) {
+            if (!gameStartTime) {
+                startTimer(); // Start the timer when the first level is loaded
+            }
             const filePath = `highschool/test_${level}.csv`; // Dynamic file path based on the level selected
             fetch(filePath)
                 .then(response => response.text())
@@ -202,6 +228,7 @@
                     resultDiv.innerHTML = `You got all ${correctCount} correct! 👍<br><button onclick="nextRound()">Next Round</button>`;
                 } else {
                     resultDiv.innerHTML = `You got all ${correctCount} correct! 👍<br>Game Over! Your total score is: ${score}`;
+                    stopTimer(); // Stop the timer when the game ends
                 }
             } else {
                 resultDiv.innerHTML = `Incorrect guesses. Try again!<br>` + correctAnswers.join('<br>');
