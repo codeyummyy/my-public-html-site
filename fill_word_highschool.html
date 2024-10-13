@@ -121,7 +121,7 @@
             if (!gameStartTime) {
                 startTimer(); // Start the timer when the first level is loaded
             }
-            const filePath = `highschool/test_${level}.csv`; // Dynamic file path based on the level selected
+            const filePath = `../my-private-html-site/highschool/test_${level}.csv`; // Dynamic file path based on the level selected
             fetch(filePath)
                 .then(response => response.text())
                 .then(text => {
