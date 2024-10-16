@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2011318771147222"
+     crossorigin="anonymous"></script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Fill Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #000;
+            color: #fff;
+        }
+        .game-container {
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #333;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            display: inline-block;
+            text-align: left;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #555;
+            margin-bottom: 10px;
+            display: block;
+            width: 90%;
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #444;
+            color: #fff;
+            border: 1px solid #555;
+            margin-top: 10px;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        #score {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #timer {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        .level-buttons {
+            margin-top: 20px;
+        }
+        .level-buttons button {
+            margin: 5px;
+        }
+    </style>
+   
+    
+</head>
+<body>
+    <div class="game-container">
+        <h1>Word Fill Game!</h1>
+            <input type="file" id="csvFileInput" accept=".csv">
+    <br><br>
+        <div class="level-buttons">
+            <!-- Buttons for each level -->
+            <button onclick="loadLevel(1)">2024_1016-1</button>
+            <button onclick="loadLevel(2)">2024_1016-2</button>
+        </div>
+        <div id="sentences"></div>
+        <br>
+        <div id="answers">
+            <input type="text" id="guessInput1" placeholder="Fill the blank for Sentence 1">
+            <input type="text" id="guessInput2" placeholder="Fill the blank for Sentence 2">
+            <input type="text" id="guessInput3" placeholder="Fill the blank for Sentence 3">
+        </div>
+        <button onclick="submitAllGuesses()">Submit All Answers</button>
+        <div id="result"></div>
+        <div id="score">Score: 0</div>
+        <div id="round">Round: 1 / 10</div>
+        <div id="timer">Time Spent: 0 seconds</div> <!-- Timer display -->
+    </div>
+    <script>
+        let wordsArray = [];
+        let currentWords = [];
+        let usedWords = new Set();
+        let score = 0;
+        let round = 1;
+        const totalRounds = 10;
+        let hasScoredThisRound = false;
+
+        let gameStartTime;
+        let timerInterval;
+
+        function startTimer() {
+            gameStartTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000); // Update the timer every second
+        }
+
+        function updateTimer() {
+            const currentTime = Date.now();
+            const timeSpent = Math.floor((currentTime - gameStartTime) / 1000); // Calculate time in seconds
+            document.getElementById('timer').textContent = `Time Spent: ${timeSpent} seconds`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval); // Stop the timer
+        }
+
+        function loadLevel(level) {
+            if (!gameStartTime) {
+                startTimer(); // Start the timer when the first level is loaded
+            }
+            const filePath = `eve_vocab/2024_1016/eve_vocab_2024_1016_${level}.csv`; // Dynamic file path based on the level selected
+            fetch(filePath)
+                .then(response => response.text())
+                .then(text => {
+                    wordsArray = parseCSV(text);
+                    if (wordsArray.length > 0) {
+                        selectRandomWords();
+                    } else {
+                        alert("The CSV file is empty or could not be parsed correctly.");
+                    }
+                })
+                .catch(error => {
+                    alert("Error loading the CSV file: " + error);
+                });
+        }
+
+
+    document.getElementById('csvFileInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            readCSVFile(file);
+        }
+    });
+
+    function readCSVFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            wordsArray = parseCSV(text);
+            if (wordsArray.length > 0) {
+                selectRandomWords();
+            }
+        };
+        reader.readAsText(file);
+    }
+
+
+        
+        function parseCSV(text) {
+            const rows = text.split(/\r?\n/);
+            const result = [];
+            
+            rows.forEach(row => {
+                if (row.trim().length === 0) return; // Skip empty rows
+                const columns = row.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/); // Split by comma, ignoring commas in quotes
+                if (columns) {
+                    for (let i = 0; i < columns.length; i++) {
+                        columns[i] = columns[i].replace(/^"|"$/g, '').trim();
+                    }
+                    result.push({
+                        word: columns[0] || "",
+                        pronunciation: columns[1] || "No pronunciation available",
+                        chineseDefinition: columns[2] || "No Chinese definition available",
+                        exampleSentence: columns[4] || "No example sentence available"
+                    });
+                }
+            });
+            return result.filter(entry => entry.word.length > 0 && entry.exampleSentence.length > 0);
+        }
+
+        function selectRandomWords() {
+            currentWords = [];
+            const usedIndexes = new Set();
+            while (currentWords.length < 3 && wordsArray.length > 0) {
+                let randomIndex;
+                do {
+                    randomIndex = Math.floor(Math.random() * wordsArray.length);
+                } while (usedIndexes.has(randomIndex) || usedWords.has(wordsArray[randomIndex].word));
+                usedIndexes.add(randomIndex);
+                usedWords.add(wordsArray[randomIndex].word);
+                currentWords.push(wordsArray[randomIndex]);
+            }
+            displaySentences();
+            setHints();
+            hasScoredThisRound = false;
+        }
+
+        function displaySentences() {
+            const sentencesDiv = document.getElementById('sentences');
+            sentencesDiv.innerHTML = "";
+            currentWords.forEach((entry, index) => {
+                const sentenceWithBlank = entry.exampleSentence.replace(entry.word, "___");
+                sentencesDiv.innerHTML += `<p>Sentence ${index + 1}: ${sentenceWithBlank}</p>`;
+            });
+        }
+
+        function setHints() {
+            currentWords.forEach((entry, index) => {
+                if (entry.word.length >= 2) {
+                    const hint = `${entry.word[0]}...${entry.word[entry.word.length - 1]}`;
+                    document.getElementById(`guessInput${index + 1}`).value = hint;
+                } else {
+                    document.getElementById(`guessInput${index + 1}`).value = entry.word[0];
+                }
+            });
+        }
+
+        function submitAllGuesses() {
+            const guessInput1 = document.getElementById('guessInput1').value.trim().toLowerCase().replace(/"/g, "");
+            const guessInput2 = document.getElementById('guessInput2').value.trim().toLowerCase().replace(/"/g, "");
+            const guessInput3 = document.getElementById('guessInput3').value.trim().toLowerCase().replace(/"/g, "");
+            const resultDiv = document.getElementById('result');
+            let correctCount = 0;
+            let correctAnswers = [];
+
+            if (currentWords[0].word.toLowerCase() === guessInput1) {
+                correctCount++;
+            } else {
+                correctAnswers.push(`Sentence 1: Correct answer is "${currentWords[0].word}" (${currentWords[0].chineseDefinition}, ${currentWords[0].pronunciation})`);
+            }
+            if (currentWords[1].word.toLowerCase() === guessInput2) {
+                correctCount++;
+            } else {
+                correctAnswers.push(`Sentence 2: Correct answer is "${currentWords[1].word}" (${currentWords[1].chineseDefinition}, ${currentWords[1].pronunciation})`);
+            }
+            if (currentWords[2].word.toLowerCase() === guessInput3) {
+                correctCount++;
+            } else {
+                correctAnswers.push(`Sentence 3: Correct answer is "${currentWords[2].word}" (${currentWords[2].chineseDefinition}, ${currentWords[2].pronunciation})`);
+            }
+
+            if (!hasScoredThisRound) {
+                score += correctCount;
+                hasScoredThisRound = true;
+            }
+
+            if (correctCount === 3) {
+                if (round < totalRounds) {
+                    resultDiv.innerHTML = `You got all ${correctCount} correct! 👍<br><button onclick="nextRound()">Next Round</button>`;
+                } else {
+                    resultDiv.innerHTML = `You got all ${correctCount} correct! 👍<br>Game Over! Your total score is: ${score}`;
+                    stopTimer(); // Stop the timer when the game ends
+                }
+            } else {
+                resultDiv.innerHTML = `Incorrect guesses. Try again!<br>` + correctAnswers.join('<br>');
+                document.getElementById('guessInput1').value = "";
+                document.getElementById('guessInput2').value = "";
+                document.getElementById('guessInput3').value = "";
+                setHints();
+            }
+
+            updateScore();
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = `Score: ${score}`;
+            document.getElementById('round').textContent = `Round: ${round} / ${totalRounds}`;
+        }
+
+        function nextRound() {
+            hasScoredThisRound = false;
+            round++;
+            selectRandomWords();
+            document.getElementById('result').innerHTML = "";
+            document.getElementById('guessInput1').value = "";
+            document.getElementById('guessInput2').value = "";
+            document.getElementById('guessInput3').value = "";
+            setHints();
+        }
+    </script>
+</body>
+</html>
