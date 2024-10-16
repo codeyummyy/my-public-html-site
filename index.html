@@ -34,6 +34,20 @@
     <h1></h1>
     <p>歡迎訂閱分享觀看 CodeYummy Youtube </p>
     <p><a href="https://www.youtube.com/channel/UC3OR83CXT7eaL2l_teG6QEQ"> CodeYummy Youtube Channel </a></p>
+
+    <div class="counter">
+        This page has been visited <span id="visit-count"></span> times.
+    </div>
+
+    <script>
+        // Simple Visitor Counter using localStorage
+        if (localStorage.getItem('page_view')) {
+            localStorage.setItem('page_view', Number(localStorage.getItem('page_view')) + 1);
+        } else {
+            localStorage.setItem('page_view', 1);
+        }
+        document.getElementById('visit-count').innerText = localStorage.getItem('page_view');
+    </script>
     
 </body>
 </html>
