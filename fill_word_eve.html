@@ -280,5 +280,19 @@
             setHints();
         }
     </script>
+
+    <div class="counter">
+        This page has been visited <span id="visit-count"></span> times.
+    </div>
+
+    <script>
+        // Simple Visitor Counter using localStorage
+        if (localStorage.getItem('page_view')) {
+            localStorage.setItem('page_view', Number(localStorage.getItem('page_view')) + 1);
+        } else {
+            localStorage.setItem('page_view', 1);
+        }
+        document.getElementById('visit-count').innerText = localStorage.getItem('page_view');
+    </script>
 </body>
 </html>
