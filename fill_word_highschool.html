@@ -71,6 +71,17 @@
     <br><br>
         <div class="level-buttons">
             <!-- Buttons for each level -->
+            <button onclick="loadLevel5(11)">Level 5-11</button>
+            <button onclick="loadLevel5(12)">Level 5-12</button>
+            <button onclick="loadLevel5(13)">Level 5-13</button>
+            <button onclick="loadLevel5(14)">Level 5-14</button>
+            <button onclick="loadLevel5(15)">Level 5-15</button>
+            <button onclick="loadLevel5(16)">Level 5-16</button>
+            <button onclick="loadLevel5(17)">Level 5-17</button>
+            <button onclick="loadLevel5(18)">Level 5-18</button>
+            <button onclick="loadLevel5(19)">Level 5-19</button>
+
+            
             <button onclick="loadLevel(1)">Level 6-1</button>
             <button onclick="loadLevel(2)">Level 6-2</button>
             <button onclick="loadLevel(3)">Level 6-3</button>
@@ -146,6 +157,27 @@
                 });
         }
 
+        function loadLevel5(level) {
+            if (!gameStartTime) {
+                startTimer(); // Start the timer when the first level is loaded
+            }
+            const filePath = `highschool/level5_${level}.csv`; // Dynamic file path based on the level selected
+            fetch(filePath)
+                .then(response => response.text())
+                .then(text => {
+                    wordsArray = parseCSV(text);
+                    if (wordsArray.length > 0) {
+                        selectRandomWords();
+                    } else {
+                        alert("The CSV file is empty or could not be parsed correctly.");
+                    }
+                })
+                .catch(error => {
+                    alert("Error loading the CSV file: " + error);
+                });
+        }
+
+        
 
     document.getElementById('csvFileInput').addEventListener('change', function(event) {
         const file = event.target.files[0];
