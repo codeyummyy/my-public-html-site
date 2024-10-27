@@ -66,6 +66,16 @@
     <input type="file" id="csvFileInput" accept=".csv">
     <br><br>
     <div id="levelButtons">
+        <button onclick="selectLevel5(11)">Level 5-11</button>
+        <button onclick="selectLevel5(12)">Level 5-12</button>
+        <button onclick="selectLevel5(13)">Level 5-13</button>
+        <button onclick="selectLevel5(14)">Level 5-14</button>
+        <button onclick="selectLevel5(15)">Level 5-15</button>
+        <button onclick="selectLevel5(16)">Level 5-16</button>
+        <button onclick="selectLevel5(17)">Level 5-17</button>
+        <button onclick="selectLevel5(18)">Level 5-18</button>
+        <button onclick="selectLevel5(19)">Level 5-19</button>
+        
         <button onclick="selectLevel(1)">Level 6-1</button>
         <button onclick="selectLevel(2)">Level 6-2</button>
         <button onclick="selectLevel(3)">Level 6-3</button>
@@ -227,6 +237,26 @@
         document.getElementById('guessInput3').value = "";
     }
 
+    function selectLevel5(level) {
+        const filePath = `highschool/level5_${level}.csv`;
+        fetch(filePath)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('無法讀取所選檔案');
+                }
+                return response.text();
+            })
+            .then(text => {
+                wordsArray = parseCSV(text);
+                if (wordsArray.length > 0) {
+                    selectRandomWords();
+                }
+            })
+            .catch(error => {
+                console.error('讀取檔案時發生錯誤:', error);
+            });
+    }
+    
     function selectLevel(level) {
         const filePath = `highschool/test_${level}.csv`;
         fetch(filePath)
